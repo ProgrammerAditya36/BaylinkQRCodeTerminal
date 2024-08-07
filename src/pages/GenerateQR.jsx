@@ -1,7 +1,7 @@
-import React, { useState, useRef } from "react";
+import { QRCodeCanvas } from "qrcode.react";
+import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Input from "../components/Input";
-import { QRCodeCanvas } from "qrcode.react";
 
 const GenerateQR = () => {
     const url = import.meta.env.VITE_WEB_SITE + "/send";
@@ -12,7 +12,25 @@ const GenerateQR = () => {
 
     const downloadQR = () => {
         const canvas = qrRef.current.querySelector("canvas");
-        const url = canvas.toDataURL("image/png");
+
+        // Create a new canvas with additional padding
+        const padding = 20; // Adjust the padding value as needed
+        const paddedCanvas = document.createElement("canvas");
+        const ctx = paddedCanvas.getContext("2d");
+
+        // Set the new canvas dimensions
+        paddedCanvas.width = canvas.width + padding * 2;
+        paddedCanvas.height = canvas.height + padding * 2;
+
+        // Fill the background with white (or any other color)
+        ctx.fillStyle = "#ffffff"; // Background color
+        ctx.fillRect(0, 0, paddedCanvas.width, paddedCanvas.height);
+
+        // Draw the original QR code canvas onto the new padded canvas
+        ctx.drawImage(canvas, padding, padding);
+
+        // Convert the padded canvas to a data URL and download
+        const url = paddedCanvas.toDataURL("image/png");
         const link = document.createElement("a");
         link.href = url;
         link.download = `QRCode-${id}.png`;

@@ -1,15 +1,21 @@
-import React, { useState } from "react";
+import axios from "axios";
+import { doc, setDoc } from "firebase/firestore";
+import "leaflet/dist/leaflet.css";
+import React, { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { MapContainer, Marker, TileLayer, useMapEvents } from "react-leaflet";
 import { v4 as uuidv4 } from "uuid";
 import { db } from "../firebaseconfig";
-import { doc, setDoc } from "firebase/firestore";
-import { QRCodeSVG } from "qrcode.react";
-import toast from "react-hot-toast";
+
 const Input = ({ setGenerated, setId }) => {
     const [name, setName] = useState("");
     const [retailerEntity, setRetailerEntity] = useState("");
-    const [location, setLocation] = useState("");
-    const [dealer, setDealer] = useState("");
+    const [latitude, setLatitude] = useState("");
+    const [longitude, setLongitude] = useState("");
     const [pincode, setPincode] = useState("");
+    const [showMap, setShowMap] = useState(false);
+    const [location, setLocation] = useState("");
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         switch (name) {
@@ -22,9 +28,6 @@ const Input = ({ setGenerated, setId }) => {
             case "location":
                 setLocation(value);
                 break;
-            case "dealer":
-                setDealer(value);
-                break;
             case "pincode":
                 setPincode(value);
                 break;
@@ -32,16 +35,60 @@ const Input = ({ setGenerated, setId }) => {
                 break;
         }
     };
+
+    useEffect(() => {
+        navigator.geolocation.getCurrentPosition((position) => {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            setLatitude(lat);
+            setLongitude(lng);
+
+            // Fetch the location name and pincode for the initial coordinates
+            const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`;
+            axios
+                .get(url)
+                .then((res) => {
+                    const { address, display_name } = res?.data;
+                    setPincode(address?.postcode);
+                    setLocation(display_name); // Set the initial location name
+                })
+                .catch((error) => {
+                    console.error(
+                        "Error fetching initial location name:",
+                        error,
+                    );
+                });
+        });
+    }, []);
+
+    const handleMapClick = (event) => {
+        const { lat, lng } = event.latlng;
+        setLatitude(lat);
+        setLongitude(lng);
+
+        // Fetch the location name for the selected coordinates
+        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`;
+        axios
+            .get(url)
+            .then((res) => {
+                const { display_name } = res.data;
+                setLocation(display_name); // Set the location name based on map click
+            })
+            .catch((error) => {
+                console.error("Error fetching location name:", error);
+            });
+    };
+
     const handleSubmit = async () => {
-        console.log({ name, retailerEntity, location, dealer, pincode });
         const id = uuidv4();
         try {
             await setDoc(doc(db, "users", id), {
                 name,
                 retailerEntity,
-                location,
-                dealer,
+                latitude,
+                longitude,
                 pincode,
+                location, // Store the location name in the database
             });
             setId(id);
             toast.success("QR generated successfully");
@@ -53,6 +100,17 @@ const Input = ({ setGenerated, setId }) => {
             toast.error("Error generating QR");
         }
     };
+
+    const LocationPicker = () => {
+        useMapEvents({
+            click: handleMapClick,
+        });
+
+        return latitude && longitude ? (
+            <Marker position={[latitude, longitude]} />
+        ) : null;
+    };
+
     return (
         <>
             <div className="mb-4">
@@ -88,6 +146,38 @@ const Input = ({ setGenerated, setId }) => {
             <div className="mb-4">
                 <label
                     className="mb-2 block font-semibold text-indigo-500"
+                    htmlFor="latitude"
+                >
+                    Latitude
+                </label>
+                <input
+                    className="w-full rounded border-b-2 border-indigo-500 p-2 text-indigo-700 outline-none focus:bg-gray-200"
+                    type="text"
+                    name="latitude"
+                    id="latitude"
+                    value={latitude}
+                    onChange={handleChange}
+                />
+            </div>
+            <div className="mb-4">
+                <label
+                    className="mb-2 block font-semibold text-indigo-500"
+                    htmlFor="longitude"
+                >
+                    Longitude
+                </label>
+                <input
+                    className="w-full rounded border-b-2 border-indigo-500 p-2 text-indigo-700 outline-none focus:bg-gray-200"
+                    type="text"
+                    name="longitude"
+                    id="longitude"
+                    value={longitude}
+                    onChange={handleChange}
+                />
+            </div>
+            <div className="mb-4">
+                <label
+                    className="mb-2 block font-semibold text-indigo-500"
                     htmlFor="location"
                 >
                     Location
@@ -97,21 +187,7 @@ const Input = ({ setGenerated, setId }) => {
                     type="text"
                     name="location"
                     id="location"
-                    onChange={handleChange}
-                />
-            </div>
-            <div className="mb-4">
-                <label
-                    className="mb-2 block font-semibold text-indigo-500"
-                    htmlFor="dealer"
-                >
-                    Dealer
-                </label>
-                <input
-                    className="w-full rounded border-b-2 border-indigo-500 p-2 text-indigo-700 outline-none focus:bg-gray-200"
-                    type="text"
-                    name="dealer"
-                    id="dealer"
+                    value={location}
                     onChange={handleChange}
                 />
             </div>
@@ -128,8 +204,29 @@ const Input = ({ setGenerated, setId }) => {
                     name="pincode"
                     id="pincode"
                     onChange={handleChange}
+                    value={pincode}
                 />
             </div>
+            <div>
+                <button
+                    className="mb-4 w-full rounded bg-indigo-700 px-4 py-2 font-bold text-white transition duration-300 ease-in-out hover:bg-blue-700"
+                    onClick={() => setShowMap(!showMap)}
+                >
+                    {showMap ? "Close Map" : "Pick from Map"}
+                </button>
+            </div>
+            {showMap && (
+                <div className="mb-4">
+                    <MapContainer
+                        center={[latitude || 51.505, longitude || -0.09]}
+                        zoom={13}
+                        className="mt-4 h-64 w-full"
+                    >
+                        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                        <LocationPicker />
+                    </MapContainer>
+                </div>
+            )}
             <div>
                 <button
                     className="w-full rounded bg-indigo-700 px-4 py-2 font-bold text-white transition duration-300 ease-in-out hover:bg-blue-700"
