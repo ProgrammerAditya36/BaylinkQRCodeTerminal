@@ -5,8 +5,8 @@ import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { MapContainer, Marker, TileLayer, useMapEvents } from "react-leaflet";
 import { v4 as uuidv4 } from "uuid";
+import markerIcon from "../assets/marker_icon.png";
 import { db } from "../firebaseconfig";
-
 const Input = ({ setGenerated, setId }) => {
     const [name, setName] = useState("");
     const [retailerEntity, setRetailerEntity] = useState("");
@@ -15,7 +15,7 @@ const Input = ({ setGenerated, setId }) => {
     const [pincode, setPincode] = useState("");
     const [showMap, setShowMap] = useState(false);
     const [location, setLocation] = useState("");
-
+    const [loading, setLoading] = useState(false);
     const handleChange = (e) => {
         const { name, value } = e.target;
         switch (name) {
@@ -90,6 +90,7 @@ const Input = ({ setGenerated, setId }) => {
     }, [latitude, longitude]);
 
     const handleSubmit = async () => {
+        setLoading(true);
         const id = uuidv4();
         try {
             await setDoc(doc(db, "users", id), {
@@ -108,9 +109,18 @@ const Input = ({ setGenerated, setId }) => {
         } catch (e) {
             console.error("Error adding document: ", e);
             toast.error("Error generating QR");
+        } finally {
+            setLoading(false);
         }
     };
-
+    const getIcon = () => {
+        return L.icon({
+            iconUrl: markerIcon,
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41],
+        });
+    };
     const LocationPicker = () => {
         useMapEvents({
             click: handleMapClick,
@@ -120,7 +130,9 @@ const Input = ({ setGenerated, setId }) => {
             return null;
         }
 
-        return <Marker position={[latitude, longitude]} />;
+        return (
+            <Marker position={[latitude, longitude]} icon={getIcon()}></Marker>
+        );
     };
 
     return (
@@ -225,6 +237,7 @@ const Input = ({ setGenerated, setId }) => {
                 <button
                     className="mb-4 w-full rounded bg-indigo-700 px-4 py-2 font-bold text-white transition duration-300 ease-in-out hover:bg-blue-700"
                     onClick={() => setShowMap(!showMap)}
+                    disabled={loading}
                 >
                     {showMap ? "Close Map" : "Pick from Map"}
                 </button>
@@ -245,6 +258,7 @@ const Input = ({ setGenerated, setId }) => {
                 <button
                     className="w-full rounded bg-indigo-700 px-4 py-2 font-bold text-white transition duration-300 ease-in-out hover:bg-blue-700"
                     onClick={handleSubmit}
+                    disabled={loading}
                 >
                     Generate
                 </button>

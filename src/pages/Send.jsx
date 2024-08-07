@@ -1,8 +1,8 @@
-import React from "react";
-import { useParams } from "react-router-dom";
-import toast from "react-hot-toast";
 import axios from "axios";
 import { doc, getDoc } from "firebase/firestore";
+import React from "react";
+import toast from "react-hot-toast";
+import { useParams } from "react-router-dom";
 import { db } from "../firebaseconfig";
 
 const Send = () => {
@@ -14,7 +14,7 @@ const Send = () => {
             const docSnap = await getDoc(docRef);
             const data = docSnap.data();
 
-            const message = `Name: ${data.name}\nRetailer Entity: ${data.retailerEntity}\nLocation: ${data.location}\nDealer: ${data.dealer}\nPincode: ${data.pincode}`;
+            const message = `Name: ${data.name}\nRetailer Entity: ${data.retailerEntity}\nLocation: ${data.location}\nLatitude: ${data.latitude}\nLongitude: ${data.longitude}\nPincode: ${data.pincode}`;
             const subject =
                 type === "compliant"
                     ? `BayLink :- Complaint from ${data.name}`
@@ -31,7 +31,6 @@ const Send = () => {
                     {
                         access_key: token,
                         name: data.name,
-                        email: data.email, // Make sure you include the user’s email if needed
                         subject,
                         message,
                     },
