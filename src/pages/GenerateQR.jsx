@@ -1,6 +1,8 @@
-import { QRCodeCanvas } from "qrcode.react";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
+import { QRCode } from "react-qrcode-logo";
 import { useNavigate } from "react-router-dom";
+import logo from "../assets/logo.png";
+import qrLogo from "../assets/qr_logo.png";
 import Input from "../components/Input";
 
 const GenerateQR = () => {
@@ -12,44 +14,13 @@ const GenerateQR = () => {
     const qrRef = useRef();
 
     const downloadQR = () => {
-        // Create a new canvas with additional padding
-
-        const link = document.createElement("a");
-        link.href = imgUrl;
-        link.download = `QRCode-${id}.png`;
-        link.click();
+        qrRef.current?.download();
     };
-    useEffect(() => {
-        if (generated) {
-            const canvas = qrRef.current.querySelector("canvas");
-            const padding = 20; // Adjust the padding value as needed
-            const paddedCanvas = document.createElement("canvas");
-            const ctx = paddedCanvas.getContext("2d");
 
-            // Set the new canvas dimensions
-            paddedCanvas.width = canvas.width + padding * 2;
-            paddedCanvas.height = canvas.height + padding * 2;
-
-            // Fill the background with white (or any other color)
-            ctx.fillStyle = "#ffffff"; // Background color
-            ctx.fillRect(0, 0, paddedCanvas.width, paddedCanvas.height);
-
-            // Draw the original QR code canvas onto the new padded canvas
-            ctx.drawImage(canvas, padding, padding);
-
-            // Convert the padded canvas to a data URL and download
-            const url = paddedCanvas.toDataURL("image/png");
-            setImgUrl(url);
-        }
-    });
     return (
         <div className="flex min-h-screen bg-indigo-700 py-5">
             <div className="m-auto flex w-full max-w-xl flex-col items-center justify-center rounded-lg bg-indigo-100 py-8 shadow-lg">
-                <header className="mb-8 text-center">
-                    <h1 className="text-2xl font-bold text-indigo-700">
-                        BayLink
-                    </h1>
-                </header>
+                <img src={logo} className="w-1/3" alt="" />
                 <div className="mx-auto w-full justify-items-center self-center px-10">
                     {generated ? (
                         <div>
@@ -57,21 +28,28 @@ const GenerateQR = () => {
                                 <h1 className="mb-4 text-2xl font-semibold text-indigo-700">
                                     QR Code Generated
                                 </h1>
-                                <div ref={qrRef} className="hidden">
-                                    <QRCodeCanvas
-                                        value={url + "/" + id}
+                                <div>
+                                    <QRCode
+                                        value={`${url}/${id}`}
                                         size={256}
+                                        ref={qrRef}
+                                        logoImage={qrLogo}
+                                        logoWidth={80}
+                                        fgColor="#28b1e2"
+                                        bgColor="#fff"
+                                        logoOpacity={1}
+                                        removeQrCodeBehindLogo={true}
+                                        logoPaddingStyle="circle"
+                                        qrStyle="dots"
+                                        eyeColor="#28b1e2"
+                                        eyeRadius={10}
                                         style={{
-                                            padding: "20px",
-                                            background: "#ffffff",
+                                            borderRadius: "10px",
+                                            boxShadow:
+                                                "0 0 10px rgba(0, 0, 0, 0.1)",
+                                            border: "5px solid #28b1e2",
                                         }}
-                                    />
-                                </div>
-                                <div className="w-64 rounded-lg border-2 border-indigo-700 bg-white">
-                                    <img
-                                        src={imgUrl}
-                                        alt="QR Code"
-                                        className="w-full p-2"
+                                        ecLevel="Q"
                                     />
                                 </div>
                             </div>
