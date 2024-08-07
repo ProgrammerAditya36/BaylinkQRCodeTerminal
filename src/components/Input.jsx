@@ -10,8 +10,8 @@ import { db } from "../firebaseconfig";
 const Input = ({ setGenerated, setId }) => {
     const [name, setName] = useState("");
     const [retailerEntity, setRetailerEntity] = useState("");
-    const [latitude, setLatitude] = useState("");
-    const [longitude, setLongitude] = useState("");
+    const [latitude, setLatitude] = useState(null); // Use null instead of "" for initial state
+    const [longitude, setLongitude] = useState(null); // Use null instead of "" for initial state
     const [pincode, setPincode] = useState("");
     const [showMap, setShowMap] = useState(false);
     const [location, setLocation] = useState("");
@@ -28,6 +28,13 @@ const Input = ({ setGenerated, setId }) => {
             case "location":
                 setLocation(value);
                 break;
+            case "latitude":
+                setLatitude(value);
+                break;
+            case "longitude":
+                setLongitude(value);
+                break;
+
             case "pincode":
                 setPincode(value);
                 break;
@@ -67,17 +74,20 @@ const Input = ({ setGenerated, setId }) => {
         setLongitude(lng);
 
         // Fetch the location name for the selected coordinates
-        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`;
+    };
+    useEffect(() => {
+        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`;
         axios
             .get(url)
             .then((res) => {
-                const { display_name } = res.data;
-                setLocation(display_name); // Set the location name based on map click
+                const { address, display_name } = res.data;
+                setLocation(display_name);
+                setPincode(address?.postcode); // Set the location name based on map click
             })
             .catch((error) => {
                 console.error("Error fetching location name:", error);
             });
-    };
+    }, [latitude, longitude]);
 
     const handleSubmit = async () => {
         const id = uuidv4();
@@ -106,9 +116,11 @@ const Input = ({ setGenerated, setId }) => {
             click: handleMapClick,
         });
 
-        return latitude && longitude ? (
-            <Marker position={[latitude, longitude]} />
-        ) : null;
+        if (latitude === null || longitude === null) {
+            return null;
+        }
+
+        return <Marker position={[latitude, longitude]} />;
     };
 
     return (
@@ -125,6 +137,7 @@ const Input = ({ setGenerated, setId }) => {
                     type="text"
                     name="name"
                     id="name"
+                    value={name}
                     onChange={handleChange}
                 />
             </div>
@@ -140,6 +153,7 @@ const Input = ({ setGenerated, setId }) => {
                     type="text"
                     name="retailerEntity"
                     id="retailerEntity"
+                    value={retailerEntity}
                     onChange={handleChange}
                 />
             </div>
@@ -155,7 +169,7 @@ const Input = ({ setGenerated, setId }) => {
                     type="text"
                     name="latitude"
                     id="latitude"
-                    value={latitude}
+                    value={latitude || ""}
                     onChange={handleChange}
                 />
             </div>
@@ -171,7 +185,7 @@ const Input = ({ setGenerated, setId }) => {
                     type="text"
                     name="longitude"
                     id="longitude"
-                    value={longitude}
+                    value={longitude || ""}
                     onChange={handleChange}
                 />
             </div>
@@ -203,8 +217,8 @@ const Input = ({ setGenerated, setId }) => {
                     type="text"
                     name="pincode"
                     id="pincode"
-                    onChange={handleChange}
                     value={pincode}
+                    onChange={handleChange}
                 />
             </div>
             <div>
