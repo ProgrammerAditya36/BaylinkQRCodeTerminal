@@ -1,14 +1,17 @@
+import { CSpinner } from "@coreui/react";
 import axios from "axios";
 import { doc, getDoc } from "firebase/firestore";
-import React from "react";
+import React, { useState } from "react";
 import toast from "react-hot-toast";
 import { useParams } from "react-router-dom";
 import { db } from "../firebaseconfig";
 
 const Send = () => {
     const { id } = useParams();
+    const [loading, setLoading] = useState(false);
 
     const handleSend = async (type) => {
+        setLoading(true);
         try {
             const docRef = doc(db, "users", id);
             const docSnap = await getDoc(docRef);
@@ -50,6 +53,8 @@ const Send = () => {
                 e.response ? e.response.data : e.message,
             );
             toast.error("Error sending compliant");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -64,14 +69,24 @@ const Send = () => {
                 <button
                     className="mt-4 w-full rounded-lg bg-red-700 px-4 py-2 text-white"
                     onClick={() => handleSend("compliant")}
+                    disabled={loading}
                 >
-                    Log Compliant
+                    {loading ? (
+                        <CSpinner size="sm" color="white" />
+                    ) : (
+                        "Log Complaint"
+                    )}
                 </button>
                 <button
                     className="mt-4 w-full rounded-lg bg-indigo-700 px-4 py-2 text-white"
                     onClick={() => handleSend("inventory")}
+                    disabled={loading}
                 >
-                    Request Inventory
+                    {loading ? (
+                        <CSpinner size="sm" color="white" />
+                    ) : (
+                        "Request Inventory"
+                    )}
                 </button>
             </div>
         </div>

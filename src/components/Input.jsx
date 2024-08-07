@@ -1,3 +1,4 @@
+import { CSpinner } from "@coreui/react";
 import axios from "axios";
 import { doc, setDoc } from "firebase/firestore";
 import "leaflet/dist/leaflet.css";
@@ -7,15 +8,17 @@ import { MapContainer, Marker, TileLayer, useMapEvents } from "react-leaflet";
 import { v4 as uuidv4 } from "uuid";
 import markerIcon from "../assets/marker_icon.png";
 import { db } from "../firebaseconfig";
+
 const Input = ({ setGenerated, setId }) => {
     const [name, setName] = useState("");
     const [retailerEntity, setRetailerEntity] = useState("");
-    const [latitude, setLatitude] = useState(null); // Use null instead of "" for initial state
-    const [longitude, setLongitude] = useState(null); // Use null instead of "" for initial state
+    const [latitude, setLatitude] = useState(null);
+    const [longitude, setLongitude] = useState(null);
     const [pincode, setPincode] = useState("");
     const [showMap, setShowMap] = useState(false);
     const [location, setLocation] = useState("");
     const [loading, setLoading] = useState(false);
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         switch (name) {
@@ -34,7 +37,6 @@ const Input = ({ setGenerated, setId }) => {
             case "longitude":
                 setLongitude(value);
                 break;
-
             case "pincode":
                 setPincode(value);
                 break;
@@ -50,14 +52,13 @@ const Input = ({ setGenerated, setId }) => {
             setLatitude(lat);
             setLongitude(lng);
 
-            // Fetch the location name and pincode for the initial coordinates
             const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`;
             axios
                 .get(url)
                 .then((res) => {
                     const { address, display_name } = res?.data;
                     setPincode(address?.postcode);
-                    setLocation(display_name); // Set the initial location name
+                    setLocation(display_name);
                 })
                 .catch((error) => {
                     console.error(
@@ -72,9 +73,8 @@ const Input = ({ setGenerated, setId }) => {
         const { lat, lng } = event.latlng;
         setLatitude(lat);
         setLongitude(lng);
-
-        // Fetch the location name for the selected coordinates
     };
+
     useEffect(() => {
         const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`;
         axios
@@ -82,7 +82,7 @@ const Input = ({ setGenerated, setId }) => {
             .then((res) => {
                 const { address, display_name } = res.data;
                 setLocation(display_name);
-                setPincode(address?.postcode); // Set the location name based on map click
+                setPincode(address?.postcode);
             })
             .catch((error) => {
                 console.error("Error fetching location name:", error);
@@ -99,7 +99,7 @@ const Input = ({ setGenerated, setId }) => {
                 latitude,
                 longitude,
                 pincode,
-                location, // Store the location name in the database
+                location,
             });
             setId(id);
             toast.success("QR generated successfully");
@@ -113,6 +113,7 @@ const Input = ({ setGenerated, setId }) => {
             setLoading(false);
         }
     };
+
     const getIcon = () => {
         return L.icon({
             iconUrl: markerIcon,
@@ -121,6 +122,7 @@ const Input = ({ setGenerated, setId }) => {
             shadowSize: [41, 41],
         });
     };
+
     const LocationPicker = () => {
         useMapEvents({
             click: handleMapClick,
@@ -260,7 +262,11 @@ const Input = ({ setGenerated, setId }) => {
                     onClick={handleSubmit}
                     disabled={loading}
                 >
-                    Generate
+                    {loading ? (
+                        <CSpinner size="sm" color="white" />
+                    ) : (
+                        "Generate"
+                    )}
                 </button>
             </div>
         </>

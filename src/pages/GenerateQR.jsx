@@ -2,7 +2,6 @@ import { QRCodeCanvas } from "qrcode.react";
 import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Input from "../components/Input";
-
 const GenerateQR = () => {
     const url = import.meta.env.VITE_WEB_SITE + "/send";
     const navigate = useNavigate();
