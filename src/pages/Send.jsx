@@ -9,9 +9,20 @@ import { db } from "../firebaseconfig";
 const Send = () => {
     const { id } = useParams();
     const [loading, setLoading] = useState(false);
+    const [lastRequestTime, setLastRequestTime] = useState(0);
 
     const handleSend = async (type) => {
+        const currentTime = Date.now();
+        const timeDifference = (currentTime - lastRequestTime) / 1000; // Time in seconds
+
+        if (timeDifference < 10) {
+            toast.error("You can only send a request every 10 seconds.");
+            return;
+        }
+
         setLoading(true);
+        setLastRequestTime(currentTime);
+
         try {
             const docRef = doc(db, "users", id);
             const docSnap = await getDoc(docRef);
@@ -49,10 +60,10 @@ const Send = () => {
             toast.success("Request sent successfully");
         } catch (e) {
             console.error(
-                "Error sending compliant: ",
+                "Error sending request: ",
                 e.response ? e.response.data : e.message,
             );
-            toast.error("Error sending compliant");
+            toast.error("Error sending request");
         } finally {
             setLoading(false);
         }
