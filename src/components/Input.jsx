@@ -1,13 +1,13 @@
 import { CSpinner } from "@coreui/react";
+import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
 import axios from "axios";
 import { doc, setDoc } from "firebase/firestore";
-import "leaflet/dist/leaflet.css";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { MapContainer, Marker, TileLayer, useMapEvents } from "react-leaflet";
 import { v4 as uuidv4 } from "uuid";
-import markerIcon from "../assets/marker_icon.png";
 import { db } from "../firebaseconfig";
+
+const GOOGLE_API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
 
 const Input = ({ setGenerated, setId }) => {
     const [name, setName] = useState("");
@@ -52,12 +52,17 @@ const Input = ({ setGenerated, setId }) => {
             setLatitude(lat);
             setLongitude(lng);
 
-            const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`;
+            const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_API_KEY}`;
             axios
                 .get(url)
                 .then((res) => {
-                    const { address, display_name } = res?.data;
-                    setPincode(address?.postcode);
+                    const addressComponents =
+                        res.data.results[0].address_components;
+                    const display_name = res.data.results[0].formatted_address;
+                    const postcode = addressComponents.find((component) =>
+                        component.types.includes("postal_code"),
+                    )?.long_name;
+                    setPincode(postcode);
                     setLocation(display_name);
                 })
                 .catch((error) => {
@@ -70,29 +75,45 @@ const Input = ({ setGenerated, setId }) => {
     }, []);
 
     const handleMapClick = (event) => {
-        const { lat, lng } = event.latlng;
+        const lat = event.latLng.lat();
+        const lng = event.latLng.lng();
         setLatitude(lat);
         setLongitude(lng);
     };
 
     useEffect(() => {
-        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`;
-        axios
-            .get(url)
-            .then((res) => {
-                const { address, display_name } = res.data;
-                setLocation(display_name);
-                setPincode(address?.postcode);
-            })
-            .catch((error) => {
-                console.error("Error fetching location name:", error);
-            });
+        if (latitude !== null && longitude !== null) {
+            const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_API_KEY}`;
+            axios
+                .get(url)
+                .then((res) => {
+                    const addressComponents =
+                        res.data.results[0].address_components;
+                    const display_name = res.data.results[0].formatted_address;
+                    const postcode = addressComponents.find((component) =>
+                        component.types.includes("postal_code"),
+                    )?.long_name;
+                    setLocation(display_name);
+                    setPincode(postcode);
+                })
+                .catch((error) => {
+                    console.error("Error fetching location name:", error);
+                });
+        }
     }, [latitude, longitude]);
 
     const handleSubmit = async () => {
         setLoading(true);
         const id = uuidv4();
         try {
+            console.log(
+                name,
+                retailerEntity,
+                latitude,
+                longitude,
+                pincode,
+                location,
+            );
             await setDoc(doc(db, "users", id), {
                 name,
                 retailerEntity,
@@ -112,29 +133,6 @@ const Input = ({ setGenerated, setId }) => {
         } finally {
             setLoading(false);
         }
-    };
-
-    const getIcon = () => {
-        return L.icon({
-            iconUrl: markerIcon,
-            iconAnchor: [12, 41],
-            popupAnchor: [1, -34],
-            shadowSize: [41, 41],
-        });
-    };
-
-    const LocationPicker = () => {
-        useMapEvents({
-            click: handleMapClick,
-        });
-
-        if (latitude === null || longitude === null) {
-            return null;
-        }
-
-        return (
-            <Marker position={[latitude, longitude]} icon={getIcon()}></Marker>
-        );
     };
 
     return (
@@ -246,14 +244,26 @@ const Input = ({ setGenerated, setId }) => {
             </div>
             {showMap && (
                 <div className="mb-4">
-                    <MapContainer
-                        center={[latitude || 51.505, longitude || -0.09]}
-                        zoom={13}
-                        className="mt-4 h-64 w-full"
-                    >
-                        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                        <LocationPicker />
-                    </MapContainer>
+                    <LoadScript googleMapsApiKey={GOOGLE_API_KEY}>
+                        <GoogleMap
+                            mapContainerStyle={{
+                                height: "400px",
+                                width: "100%",
+                            }}
+                            center={{
+                                lat: latitude || 51.505,
+                                lng: longitude || -0.09,
+                            }}
+                            zoom={13}
+                            onClick={handleMapClick}
+                        >
+                            {latitude && longitude && (
+                                <Marker
+                                    position={{ lat: latitude, lng: longitude }}
+                                />
+                            )}
+                        </GoogleMap>
+                    </LoadScript>
                 </div>
             )}
             <div>

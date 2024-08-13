@@ -28,10 +28,13 @@ const GenerateQR = () => {
                                 <h1 className="mb-4 text-2xl font-semibold text-indigo-700">
                                     QR Code Generated
                                 </h1>
-                                <div>
+                                <div
+                                    style={{ width: "256px", height: "256px" }}
+                                >
                                     <QRCode
                                         value={`${url}/${id}`}
                                         size={256}
+                                        scale={1080 / 256} // Set the scale to achieve 1080px resolution
                                         ref={qrRef}
                                         logoImage={qrLogo}
                                         logoWidth={80}

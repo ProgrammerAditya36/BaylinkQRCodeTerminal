@@ -30,8 +30,8 @@ const Send = () => {
             const timeDifference =
                 (currentTime - lastRequestTime) / (1000 * 60 * 60 * 24); // Time in days
 
-            if (timeDifference < 3) {
-                toast.error("You can only send a request every 3 days.");
+            if (timeDifference < 1) {
+                toast.error("You can only send a request everyday.");
                 setLoading(false);
                 return;
             }
