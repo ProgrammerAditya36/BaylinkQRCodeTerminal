@@ -10,7 +10,7 @@ import { db } from "../firebaseconfig";
 const Send = () => {
     const { id } = useParams();
     const [loading, setLoading] = useState(false);
-    const [open, setOpen] = useState(true);
+    const [open, setOpen] = useState(false);
     const [title, setTitle] = useState("");
     const [popUpmessage, setPopUpMessage] = useState("");
     const [link, setLink] = useState(null);
@@ -144,7 +144,7 @@ const Popup = ({ open, setOpen, title, message, link }) => {
                 open ? "" : "hidden"
             }`}
         >
-            <div className="w-1/3 rounded-lg bg-white p-5">
+            <div className="md:text-md w-1/3 min-w-[300px] rounded-lg bg-white p-5 text-sm">
                 <h1 className="text-xl font-bold">{title}</h1>
                 <p className="text-lg">{message}</p>
                 <div className="flex justify-center gap-5">
@@ -156,7 +156,7 @@ const Popup = ({ open, setOpen, title, message, link }) => {
                     </button>
                     {link && (
                         <button
-                            className="mt-4 w-full rounded-lg bg-green-700 px-4 py-2 text-white"
+                            className="mt-4 w-full rounded-lg bg-green-700 px-2 py-2 text-white md:px-4"
                             onClick={() => window.open(link)}
                         >
                             Whatsapp Us
