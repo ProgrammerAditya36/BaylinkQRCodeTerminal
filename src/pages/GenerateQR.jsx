@@ -1,6 +1,7 @@
 import React, { useRef, useState } from "react";
 import { QRCode } from "react-qrcode-logo";
 import { useNavigate } from "react-router-dom";
+import { toPng } from "html-to-image"; // Import the toPng method directly
 import logo from "../assets/logo.png";
 import qrLogo from "../assets/qr_logo.png";
 import Input from "../components/Input";
@@ -10,11 +11,23 @@ const GenerateQR = () => {
     const navigate = useNavigate();
     const [generated, setGenerated] = useState(false);
     const [id, setId] = useState("");
-    const [imgUrl, setImgUrl] = useState("");
+    const [userName, setUserName] = useState("");
+    const [userNumber, setUserNumber] = useState("");
     const qrRef = useRef();
 
     const downloadQR = () => {
-        qrRef.current?.download();
+        if (qrRef.current) {
+            toPng(qrRef.current) // Use the toPng method from html-to-image
+                .then((dataUrl) => {
+                    const link = document.createElement("a");
+                    link.download = "qr_code.png";
+                    link.href = dataUrl;
+                    link.click();
+                })
+                .catch((err) => {
+                    console.error("Error generating image:", err);
+                });
+        }
     };
 
     return (
@@ -29,13 +42,20 @@ const GenerateQR = () => {
                                     QR Code Generated
                                 </h1>
                                 <div
-                                    style={{ width: "256px", height: "256px" }}
+                                    className="flex flex-col items-center justify-center gap-2 rounded-md bg-white p-5"
+                                    ref={qrRef}
+                                    style={{
+                                        boxShadow:
+                                            "0 0 10px rgba(0, 0, 0, 0.1)",
+
+                                        textAlign: "center",
+                                        backgroundColor: "#fff",
+                                    }}
                                 >
                                     <QRCode
                                         value={`${url}/${id}`}
-                                        size={256}
-                                        scale={1080 / 256} // Set the scale to achieve 1080px resolution
-                                        ref={qrRef}
+                                        size={512}
+                                        scale={6}
                                         logoImage={qrLogo}
                                         logoWidth={80}
                                         fgColor="#28b1e2"
@@ -45,15 +65,21 @@ const GenerateQR = () => {
                                         logoPaddingStyle="circle"
                                         qrStyle="dots"
                                         eyeColor="#28b1e2"
-                                        eyeRadius={10}
                                         style={{
                                             borderRadius: "10px",
-                                            boxShadow:
-                                                "0 0 10px rgba(0, 0, 0, 0.1)",
                                             border: "5px solid #28b1e2",
                                         }}
+                                        eyeRadius={10}
                                         ecLevel="Q"
                                     />
+                                    <div className="mt-3">
+                                        <div className="text-4xl font-semibold capitalize">
+                                            {userName}
+                                        </div>
+                                        <div className="text-2xl">
+                                            {userNumber}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <button
@@ -64,7 +90,12 @@ const GenerateQR = () => {
                             </button>
                         </div>
                     ) : (
-                        <Input setGenerated={setGenerated} setId={setId} />
+                        <Input
+                            setGenerated={setGenerated}
+                            setId={setId}
+                            setUserName={setUserName}
+                            setUserNumber={setUserNumber}
+                        />
                     )}
                 </div>
             </div>

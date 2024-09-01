@@ -1,16 +1,17 @@
-import { CSpinner } from "@coreui/react";
+import React, { useState, useEffect } from "react";
 import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
 import axios from "axios";
 import { doc, setDoc } from "firebase/firestore";
-import React, { useEffect, useState } from "react";
-import toast from "react-hot-toast";
 import { v4 as uuidv4 } from "uuid";
 import { db } from "../firebaseconfig";
+import toast from "react-hot-toast";
+import { CSpinner } from "@coreui/react";
 
 const GOOGLE_API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
 
-const Input = ({ setGenerated, setId }) => {
+const Input = ({ setGenerated, setId, setUserName, setUserNumber }) => {
     const [name, setName] = useState("");
+    const [number, setNumber] = useState("");
     const [retailerEntity, setRetailerEntity] = useState("");
     const [latitude, setLatitude] = useState(null);
     const [longitude, setLongitude] = useState(null);
@@ -24,6 +25,9 @@ const Input = ({ setGenerated, setId }) => {
         switch (name) {
             case "name":
                 setName(value);
+                break;
+            case "number":
+                setNumber(value);
                 break;
             case "retailerEntity":
                 setRetailerEntity(value);
@@ -108,6 +112,7 @@ const Input = ({ setGenerated, setId }) => {
         try {
             console.log(
                 name,
+                number,
                 retailerEntity,
                 latitude,
                 longitude,
@@ -116,6 +121,7 @@ const Input = ({ setGenerated, setId }) => {
             );
             await setDoc(doc(db, "users", id), {
                 name,
+                phone: number,
                 retailerEntity,
                 latitude,
                 longitude,
@@ -123,6 +129,8 @@ const Input = ({ setGenerated, setId }) => {
                 location,
             });
             setId(id);
+            setUserName(name);
+            setUserNumber(number);
             toast.success("QR generated successfully");
             setGenerated(true);
 
@@ -150,6 +158,22 @@ const Input = ({ setGenerated, setId }) => {
                     name="name"
                     id="name"
                     value={name}
+                    onChange={handleChange}
+                />
+            </div>
+            <div className="mb-4">
+                <label
+                    className="mb-2 block font-semibold text-indigo-500"
+                    htmlFor="number"
+                >
+                    Phone Number
+                </label>
+                <input
+                    className="w-full rounded border-b-2 border-indigo-500 p-2 text-indigo-700 outline-none focus:bg-gray-200"
+                    type="text"
+                    name="number"
+                    id="number"
+                    value={number}
                     onChange={handleChange}
                 />
             </div>

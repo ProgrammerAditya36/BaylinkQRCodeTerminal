@@ -45,7 +45,7 @@ const Send = () => {
                 return;
             }
 
-            const message = `Name: ${data.name}\nRetailer Entity: ${data.retailerEntity}\nLocation: ${data.location}\nLatitude: ${data.latitude}\nLongitude: ${data.longitude}\nPincode: ${data.pincode}`;
+            const message = `Name: ${data.name}\nPhone: ${data.phone}\nRetailer Entity: ${data.retailerEntity}\nLocation: ${data.location}\nLatitude: ${data.latitude}\nLongitude: ${data.longitude}\nPincode: ${data.pincode}`;
             const subject =
                 type === "compliant"
                     ? `BayLink :- Complaint from ${data.name}`
