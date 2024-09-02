@@ -51,10 +51,7 @@ const Send = () => {
                     ? `BayLink :- Complaint from ${data.name}`
                     : `BayLink :- Inventory Request from ${data.name}`;
 
-            const emails = [
-                import.meta.env.VITE_EMAIL_1_ACCESS,
-                import.meta.env.VITE_EMAIL_2_ACCESS,
-            ];
+            const emails = [import.meta.env.VITE_EMAIL_1_ACCESS];
 
             for (const token of emails) {
                 const response = await axios.post(
