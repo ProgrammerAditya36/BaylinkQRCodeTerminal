@@ -202,7 +202,6 @@ const Input = ({ setGenerated, setId, setUserName, setUserNumber }) => {
             setLoading(false);
         }
     };
-    console.log(GOOGLE_TRANSLATE_API_KEY);
     return (
         <>
             <div className="mb-4">
